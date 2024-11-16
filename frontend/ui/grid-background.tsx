@@ -4,6 +4,9 @@ import { cn } from "../utils/cn";
 
 const GridBackground = React.memo(({ className }: { className?: string }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mouseRef = useRef({ x: 0, y: 0 });
+  const intensityMapRef = useRef<Map<string, number>>(new Map());
   const streakRef = useRef<{
     active: boolean;
     type: "h" | "v";
@@ -13,10 +16,21 @@ const GridBackground = React.memo(({ className }: { className?: string }) => {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseRef.current = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      };
+    };
+
+    container.addEventListener("mousemove", handleMouseMove);
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -35,11 +49,11 @@ const GridBackground = React.memo(({ className }: { className?: string }) => {
 
     // Grid configuration
     const spacing = 40;
-    // Only calculate lines needed for visible area
     const numHorizontal = Math.ceil(canvas.clientHeight / spacing);
     const numVertical = Math.ceil(canvas.clientWidth / spacing);
     const streakSpeed = 8;
     const streakLength = 100;
+    const fadeSpeed = 0.99;
 
     const createNewStreak = () => {
       const isHorizontal = Math.random() > 0.5;
@@ -54,19 +68,35 @@ const GridBackground = React.memo(({ className }: { className?: string }) => {
       };
     };
 
-    const illuminateSquare = (x: number, y: number, intensity: number) => {
-      // Only draw squares within visible bounds
-      if (x < 0 || x > canvas.clientWidth || y < 0 || y > canvas.clientHeight)
-        return;
+    const getGridKey = (x: number, y: number) => `${x},${y}`;
 
-      ctx.save();
-      const glow = ctx.createRadialGradient(x, y, 0, x, y, spacing);
-      glow.addColorStop(0, `rgba(174, 72, 255, ${intensity * 0.01})`);
-      glow.addColorStop(1, "rgba(174, 72, 255, 0)");
+    const drawGrid = (x: number, y: number, intensity: number = 0) => {
+      const key = getGridKey(x, y);
+      let currentIntensity = intensityMapRef.current.get(key) || 0;
 
-      ctx.fillStyle = glow;
-      ctx.fillRect(x - spacing, y - spacing, spacing * 2, spacing * 2);
-      ctx.restore();
+      // Update intensity
+      if (intensity > currentIntensity) {
+        currentIntensity = intensity;
+      } else {
+        currentIntensity *= fadeSpeed;
+      }
+
+      // Store new intensity
+      if (currentIntensity > 0.01) {
+        intensityMapRef.current.set(key, currentIntensity);
+      } else {
+        intensityMapRef.current.delete(key);
+      }
+
+      // Draw the filled square with varying opacity
+      if (currentIntensity > 0) {
+        ctx.fillStyle = `rgba(91, 75, 168, ${currentIntensity * 0.15})`;
+        ctx.fillRect(x, y, spacing, spacing);
+      }
+
+      // Draw grid lines
+      ctx.strokeStyle = "rgba(82, 82, 91, 0.05)";
+      ctx.strokeRect(x, y, spacing, spacing);
     };
 
     const draw = () => {
@@ -74,26 +104,23 @@ const GridBackground = React.memo(({ className }: { className?: string }) => {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw grid only within visible area
-      ctx.beginPath();
-      ctx.strokeStyle = "rgba(82, 82, 91, 0.125)";
-      ctx.lineWidth = 1;
+      // Get current mouse grid position
+      const mouseGridX = Math.floor(mouseRef.current.x / spacing);
+      const mouseGridY = Math.floor(mouseRef.current.y / spacing);
 
-      // Horizontal lines
-      for (let i = 0; i < numHorizontal; i++) {
-        const y = i * spacing;
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.clientWidth, y);
-      }
-
-      // Vertical lines
+      // Draw grid with illumination
       for (let i = 0; i < numVertical; i++) {
-        const x = i * spacing;
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.clientHeight);
-      }
+        for (let j = 0; j < numHorizontal; j++) {
+          const distanceToMouse = Math.sqrt(
+            Math.pow(i - mouseGridX, 2) + Math.pow(j - mouseGridY, 2)
+          );
 
-      ctx.stroke();
+          // Calculate target intensity
+          const intensity = distanceToMouse <= 2 ? 1 - distanceToMouse / 2 : 0;
+
+          drawGrid(i * spacing, j * spacing, intensity);
+        }
+      }
 
       const streak = streakRef.current;
       if (streak?.active) {
@@ -101,49 +128,9 @@ const GridBackground = React.memo(({ className }: { className?: string }) => {
 
         if (streak.type === "h") {
           const y = streak.index * spacing;
-
-          // Only calculate visible squares
-          const startX = Math.max(0, streak.position - streakLength / 2);
-          const endX = Math.min(
-            canvas.clientWidth,
-            streak.position + streakLength / 2
-          );
-
-          for (
-            let x = Math.floor(startX / spacing) * spacing;
-            x <= endX;
-            x += spacing
-          ) {
-            const distance = Math.abs(x - streak.position);
-            const intensity = 1 - distance / streakLength;
-            if (intensity > 0) {
-              illuminateSquare(x, y, intensity);
-            }
-          }
-
           ctx.translate(streak.position, y);
         } else {
           const x = streak.index * spacing;
-
-          // Only calculate visible squares
-          const startY = Math.max(0, streak.position - streakLength / 2);
-          const endY = Math.min(
-            canvas.clientHeight,
-            streak.position + streakLength / 2
-          );
-
-          for (
-            let y = Math.floor(startY / spacing) * spacing;
-            y <= endY;
-            y += spacing
-          ) {
-            const distance = Math.abs(y - streak.position);
-            const intensity = 1 - distance / streakLength;
-            if (intensity > 0) {
-              illuminateSquare(x, y, intensity);
-            }
-          }
-
           ctx.translate(x, streak.position);
           ctx.rotate(Math.PI / 2);
         }
@@ -173,7 +160,6 @@ const GridBackground = React.memo(({ className }: { className?: string }) => {
 
         streak.position += streakSpeed;
 
-        // Reset streak using visible bounds
         const maxPosition =
           streak.type === "h" ? canvas.clientWidth : canvas.clientHeight;
         if (streak.position > maxPosition + streakLength) {
@@ -189,11 +175,11 @@ const GridBackground = React.memo(({ className }: { className?: string }) => {
     };
     animate();
 
-    // Create new streaks frequently
     const streakInterval = setInterval(createNewStreak, 2000);
 
     return () => {
       window.removeEventListener("resize", resize);
+      container.removeEventListener("mousemove", handleMouseMove);
       cancelAnimationFrame(animationId);
       clearInterval(streakInterval);
     };
@@ -201,6 +187,7 @@ const GridBackground = React.memo(({ className }: { className?: string }) => {
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         "absolute h-full w-full inset-0 flex items-center justify-center overflow-hidden grid-background",
         className
