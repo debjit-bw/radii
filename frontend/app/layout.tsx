@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 import localFont from "next/font/local";
 import "./globals.css";
+import DynamicProvider from "@/providers/dynamic-provider";
 
 const neueRetrograde = localFont({
   src: "./fonts/NeueRegrade-Variable.woff2",
@@ -86,14 +87,16 @@ export default function RootLayout({
       <body
         className={`${neueRetrograde.variable} ${geistMono.variable} ${btBeauSans.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <DynamicProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            forcedTheme="dark"
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </DynamicProvider>
       </body>
     </html>
   );

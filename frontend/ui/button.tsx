@@ -2,17 +2,20 @@
 
 import React from "react";
 import { cn } from "@/utils/cn";
+import { Slot } from "@radix-ui/react-slot";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "coral" | "frost" | "dark";
   size?: "sm" | "md" | "lg";
   children: React.ReactNode;
   className?: string;
+  asChild?: boolean;
 }
 
 export const Button = ({
   variant = "dark",
   size = "sm",
+  asChild = false,
   className,
   children,
   disabled,
@@ -35,8 +38,10 @@ export const Button = ({
     lg: "px-6 py-3 text-lg",
   };
 
+  const Comp = asChild ? Slot : "button";
+
   return (
-    <button
+    <Comp
       className={cn(
         // Base styles
         "relative inline-block rounded-lg font-medium leading-6 text-center select-none shadow-btn",
@@ -81,6 +86,6 @@ export const Button = ({
       {...props}
     >
       {children}
-    </button>
+    </Comp>
   );
 };

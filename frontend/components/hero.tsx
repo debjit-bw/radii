@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import GridBackground from "@/ui/grid-background";
 import { Button } from "@/ui/button";
 import { Spotlight } from "@/ui/spotlight";
+import Link from "next/link";
 
 const Hero = () => {
   const letters = "Radii".split("");
@@ -77,8 +78,8 @@ const Hero = () => {
             }}
             className="flex items-center gap-4 justify-center mt-8"
           >
-            <Button size="md" variant="coral" onClick={() => {}}>
-              Get Started
+            <Button asChild size="md" variant="coral">
+              <Link href="/dashboard">Get Started</Link>
             </Button>
             <Button size="md">Learn More</Button>
           </motion.div>
