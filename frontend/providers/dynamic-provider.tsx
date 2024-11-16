@@ -6,6 +6,14 @@ import {
 } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 
+const cssOverrides = `
+	.button {
+		padding: 0.5rem 1rem;
+		border-radius: 0.5rem;
+		margin-right: -0.5rem;
+	}
+`;
+
 const DynamicProvider = ({ children }: { children: React.ReactNode }) => {
   const evmNetworks = [
     {
@@ -28,10 +36,11 @@ const DynamicProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <DynamicContextProvider
-      theme="light"
+      theme="dark"
       settings={{
         environmentId: "38c97b69-b6dc-471a-8068-b34f1672c0d4",
         walletConnectors: [EthereumWalletConnectors],
+        cssOverrides,
         overrides: {
           evmNetworks: (networks) => mergeNetworks(evmNetworks, networks),
         },

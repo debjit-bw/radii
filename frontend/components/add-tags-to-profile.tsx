@@ -2,13 +2,14 @@
 
 import { random } from "@/utils/functions";
 import React from "react";
+import { Button } from "@/ui/button";
 
 const AddTagsToProfile = () => {
   return (
     <div>
-      <button className="button" onClick={random}>
+      <Button size="sm" onClick={random}>
         Click me
-      </button>
+      </Button>
     </div>
   );
 };

@@ -5,9 +5,26 @@ export default {
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./ui/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
+      animation: {
+        spotlight: "spotlight 2s ease .75s 1 forwards",
+      },
+      keyframes: {
+        spotlight: {
+          "0%": {
+            opacity: "0",
+            transform: "translate(-72%, -62%) scale(0.5)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translate(-50%,-40%) scale(1)",
+          },
+        },
+      },
+
       colors: {
         night: {
           50: "#F6F6F8",
@@ -85,6 +102,8 @@ export default {
         soft: "0 4px 24px rgba(0, 0, 0, 0.1)",
         glow: "0 4px 32px rgba(255, 107, 74, 0.2)",
         coral: "0 4px 24px rgba(255, 107, 74, 0.2)",
+        "inner-sm": "inset 0 3px 5px rgba(46, 54, 80, 0.125)",
+        btn: "rgba(255, 255, 255, 0.15) 0 1px 0 inset,rgba(46, 54, 80, 0.075) 0 1px 1px",
       },
     },
   },
