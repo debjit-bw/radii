@@ -60,28 +60,19 @@ interface ERC20ABI {
   symbol: () => Promise<string>;
 }
 
-const fetchTokenBalance = async (address: string | undefined) => {
+const fetchTransfers = async (address: string | undefined) => {
   if (!address) throw new Error("No address provided");
 
   const response = await fetch(
-    `https://base-sepolia.blockscout.com/api/v2/tokens/${RADIUS_TOKEN}/address/${address}`,
-    {
-      headers: {
-        accept: "application/json",
-      },
-    }
+    `https://base-sepolia.blockscout.com/api/v2/addresses/${address}/token-transfers?type=ERC-20&filter=to&token=${RADIUS_TOKEN}`
   );
 
   if (!response.ok) {
-    throw new Error("Failed to fetch balance");
+    throw new Error("Failed to fetch transfers");
   }
 
-  const data = await response.json();
-  return {
-    value: data.token_balance,
-    decimals: Number(data.token_decimals),
-    symbol: data.token_symbol,
-  };
+  console.log("Fetched transfers response:", await response.clone().json());
+  return response.json();
 };
 
 const sidebarAnimation = {
@@ -118,17 +109,42 @@ export function AppSidebar() {
     name: ensName!,
   });
 
-  const { data: tokenBalance, isLoading: balanceLoading } = useQuery({
-    queryKey: ["tokenBalance", walletAddress, RADIUS_TOKEN],
-    queryFn: () => fetchTokenBalance(walletAddress),
+  const { data: transfers, isLoading: balanceLoading } = useQuery({
+    queryKey: ["transfers", walletAddress, RADIUS_TOKEN],
+    queryFn: () => fetchTransfers(walletAddress),
     enabled: !!walletAddress,
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    refetchInterval: 60000, // Refetch every minute
+    staleTime: 30000,
+    refetchInterval: 60000,
   });
 
-  const formattedBalance = tokenBalance
-    ? formatUnits(BigInt(tokenBalance.value), tokenBalance.decimals)
-    : "0.00";
+  const totalBalance =
+    transfers?.items?.reduce(
+      (
+        acc: number,
+        transfer: {
+          total: {
+            value: string | number | bigint | boolean;
+            decimals: string;
+          };
+        }
+      ) => {
+        try {
+          const value = BigInt(transfer.total.value);
+          const decimals = parseInt(transfer.total.decimals);
+          const formattedValue = Number(formatUnits(value, decimals));
+          console.log("Processing transfer:", {
+            value,
+            decimals,
+            formattedValue,
+          });
+          return acc + formattedValue;
+        } catch (error) {
+          console.error("Error processing transfer:", error);
+          return acc;
+        }
+      },
+      0
+    ) || 0;
 
   const formatAddress = (address: string | null) => {
     if (!address) return "Not connected";
@@ -271,8 +287,7 @@ export function AppSidebar() {
                         <Skeleton className="h-3 w-16" />
                       ) : (
                         <p className="text-xs text-zinc-400">
-                          {Number(formattedBalance).toFixed(2)}{" "}
-                          {tokenBalance?.symbol || "RADIUS"}
+                          {totalBalance.toFixed(2)} RADIUS
                         </p>
                       )}
                     </div>
