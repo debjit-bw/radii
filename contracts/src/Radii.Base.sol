@@ -8,6 +8,12 @@ import {DataLocation} from "@ethsign/sign-protocol-evm/src/models/DataLocation.s
 // import {Attestation} from "sign-protocol-evm/models/Attestation.sol";
 // import {DataLocation} from "sign-protocol-evm/models/DataLocation.sol";
 
+// 0x42FF98C4E85212a5D31358ACbFe76a621b50fC02
+// app_staging_880029eb1d4dcab87e776d2ed1a36be7
+// abcd
+// 0x4e4af2a21ebf62850fD99Eb6253E1eFBb56098cD
+// 1197
+
 interface IWorldID {
 	/// @notice Reverts if the zero-knowledge proof is invalid.
 	/// @param root The of the Merkle tree
@@ -121,6 +127,10 @@ contract Radii {
         }
     }
 
+    function getTagsForProfile() public view returns (uint32[] memory) {
+        return ProfileTags[msg.sender];
+    }
+
     function purchaseAdvert(string calldata contentId, uint32[] calldata tagsTargeted, uint256 viewCount) public payable {
         uint256 expectedBidAmount = tagsTargeted.length * viewCount * 1000 gwei;
         require(msg.value >= expectedBidAmount, "Insufficient funds to purchase advert");
@@ -157,23 +167,5 @@ contract Radii {
 
         // Emit an event to notify the advert purchase
         emit AdvertPurchased(msg.sender, contentId, msg.value, tagsTargeted, attestationId);
-    }
-
-    function addTagForProfile(inEuint32 calldata t1) public {
-        // address sender = msg.sender;
-
-        euint32 tag = FHE.asEuint32(t1);
-        profile_tags[msg.sender].push(tag);
-    }
-
-    function fetchTagsForProfile(address profile, uint256 start, bytes32 publicKey) public view returns (string memory, string memory, string memory, string memory, string memory, uint256) {
-        return (
-            FHE.sealoutput((start+0 < profile_tags[profile].length) ? profile_tags[profile][start+0] : FHE.asEuint32(0), publicKey),
-            FHE.sealoutput((start+1 < profile_tags[profile].length) ? profile_tags[profile][start+1] : FHE.asEuint32(0), publicKey),
-            FHE.sealoutput((start+2 < profile_tags[profile].length) ? profile_tags[profile][start+2] : FHE.asEuint32(0), publicKey),
-            FHE.sealoutput((start+3 < profile_tags[profile].length) ? profile_tags[profile][start+3] : FHE.asEuint32(0), publicKey),
-            FHE.sealoutput((start+4 < profile_tags[profile].length) ? profile_tags[profile][start+4] : FHE.asEuint32(0), publicKey),
-            profile_tags[profile].length
-        );
     }
 }
