@@ -1,7 +1,7 @@
 ![Group 112](https://github.com/user-attachments/assets/0831d1d3-0db9-43f7-8629-c397acaa5644)
 
 
-Radii (**Recursive Ad Incentivise Interaction**) is a fully decentralized, on-chain advertising platform designed to incentivize all participants—**Advertisers**, **Partners**, and **Users**. The platform leverages users' on-chain data to display targeted ads on websites and blogs, ensuring equitable ad revenue distribution. It is akin to Google AdSense but operates entirely on blockchain technology, providing transparency, decentralization, and fairness.  
+Radii (**Recursive Ad Incentivise Interaction**) is a fully decentralized, on-chain advertising platform designed to incentivize all participants—**Advertisers**, **Partners**, and **Users**. The platform leverages users' on-chain data to display targeted ads on websites, blogs, videos, apps, and DApps, ensuring equitable ad revenue distribution. It is akin to Google AdSense but operates entirely on blockchain technology, providing transparency, decentralization, and incentivisation.  
 
 ## How It Works  
 
