@@ -25,6 +25,7 @@ export const Button = ({
       "bg-coral-500 hover:bg-coral-600 focus:bg-coral-700 active:bg-coral-800 border-coral-500 hover:border-coral-600 focus:border-coral-700",
     frost:
       "bg-frost-200 hover:bg-frost-300 focus:bg-frost-400 active:bg-frost-500 border-frost-200 hover:border-frost-300 focus:border-frost-400 text-night-900",
+
     dark: "bg-night-900 hover:bg-night-800 focus:bg-night-700 active:bg-night-600 border-night-900 hover:border-night-800 focus:border-night-700 text-frost-300",
   };
 

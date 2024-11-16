@@ -33,7 +33,7 @@ const Hero = () => {
               }}
             >
               <motion.span
-                className="inline-block text-8xl font-serif text-transparent bg-clip-text bg-gradient-to-b from-frost-100 to-frost-900/75"
+                className="inline-block text-[10rem] leading-none font-serif text-transparent bg-clip-text bg-gradient-to-b from-frost-100 to-frost-900/75"
                 animate={{
                   fontVariationSettings: [
                     `"wght" ${getRandomWeight()}`,
