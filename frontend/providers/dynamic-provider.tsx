@@ -27,10 +27,26 @@ const DynamicProvider = ({ children }: { children: React.ReactNode }) => {
         name: "tFHE",
         symbol: "tFHE",
       },
-      networkId: 1,
+      networkId: 2,
 
       rpcUrls: ["https://api.nitrogen.fhenix.zone"],
       vanityName: "Fhenix Nitrogen",
+    },
+    {
+      blockExplorerUrls: ["https://sepolia.basescan.org/"],
+      chainId: 84532,
+      chainName: "Base Sepolia",
+      iconUrls: ["https://app.dynamic.xyz/assets/networks/eth.svg"],
+      name: "Base Sepolia",
+      nativeCurrency: {
+        decimals: 18,
+        name: "ETH",
+        symbol: "ETH",
+      },
+      networkId: 1,
+
+      rpcUrls: ["https://sepolia.base.org"],
+      vanityName: "Base Sepolia",
     },
   ];
 
