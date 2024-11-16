@@ -8,6 +8,8 @@ import {DataLocation} from "@ethsign/sign-protocol-evm/src/models/DataLocation.s
 // import {Attestation} from "sign-protocol-evm/models/Attestation.sol";
 // import {DataLocation} from "sign-protocol-evm/models/DataLocation.sol";
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 // 0x42FF98C4E85212a5D31358ACbFe76a621b50fC02
 // app_staging_880029eb1d4dcab87e776d2ed1a36be7
 // abcd
@@ -167,5 +169,35 @@ contract Radii {
 
         // Emit an event to notify the advert purchase
         emit AdvertPurchased(msg.sender, contentId, msg.value, tagsTargeted, attestationId);
+    }
+}
+
+contract Radius is ERC20 {
+    uint constant _initial_supply = 100 * (10**18);  // setting variable for how many of your own tokens are initially put into your wallet, feel free to edit the first number but make sure to leave the second number because we want to make sure our supply has 18 decimals
+    address[] admins;
+
+    /* ERC 20 constructor takes in 2 strings, feel free to change the first string to the name of your token name, and the second string to the corresponding symbol for your custom token name */
+    constructor() ERC20("Radius", "RADIUS") public {
+        _mint(msg.sender, _initial_supply);
+        admins.push(msg.sender);
+    }
+
+    function addAdmin(address _admin) public {
+        require(msg.sender == admins[0], "Only the owner can add an admin");
+        admins.push(_admin);
+    }
+
+    function mintToAddress(address _to, uint256 _amount) public {
+        // check if any of the admins are calling this function
+        bool isAdmin = false;
+        for (uint i = 0; i < admins.length; i++) {
+            if (msg.sender == admins[i]) {
+                isAdmin = true;
+                break;
+            }
+        }
+        require(isAdmin, "Only admins can mint new tokens");
+
+        _mint(_to, _amount);
     }
 }
