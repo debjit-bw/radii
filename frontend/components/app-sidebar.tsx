@@ -1,9 +1,18 @@
 "use client";
-import { DollarSign, Tv, User } from "lucide-react";
+
+import { DollarSign, Tv, User, Copy, Check } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useEnsName, useEnsAvatar, useBalance } from "wagmi";
+import { useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Sidebar,
   SidebarContent,
@@ -14,8 +23,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import Logo from "@/ui/logo";
+import { useQuery } from "@tanstack/react-query";
+import { formatUnits } from "viem";
 
+const RADIUS_TOKEN = "0x87DaDbc6636DF9507Ee59e0f6068b785969420D0";
 const items = [
   {
     title: "Campaigns",
@@ -39,6 +53,37 @@ const items = [
   },
 ];
 
+// Add this interface
+interface ERC20ABI {
+  balanceOf: (address: string) => Promise<bigint>;
+  decimals: () => Promise<number>;
+  symbol: () => Promise<string>;
+}
+
+const fetchTokenBalance = async (address: string | undefined) => {
+  if (!address) throw new Error("No address provided");
+
+  const response = await fetch(
+    `https://base-sepolia.blockscout.com/api/v2/tokens/${RADIUS_TOKEN}/address/${address}`,
+    {
+      headers: {
+        accept: "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch balance");
+  }
+
+  const data = await response.json();
+  return {
+    value: data.token_balance,
+    decimals: Number(data.token_decimals),
+    symbol: data.token_symbol,
+  };
+};
+
 const sidebarAnimation = {
   hidden: { opacity: 0, x: -20 },
   show: {
@@ -59,12 +104,53 @@ const itemAnimation = {
 export function AppSidebar() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentView = searchParams.get("view") || "profile";
+  const currentView = searchParams.get("view") || "campaigns";
+  const { primaryWallet } = useDynamicContext();
+  const [copied, setCopied] = useState(false);
+
+  const walletAddress = primaryWallet?.address;
+
+  const { data: ensName, isLoading: ensLoading } = useEnsName({
+    address: walletAddress as `0x${string}`,
+  });
+
+  const { data: ensAvatar, isLoading: avatarLoading } = useEnsAvatar({
+    name: ensName!,
+  });
+
+  const { data: tokenBalance, isLoading: balanceLoading } = useQuery({
+    queryKey: ["tokenBalance", walletAddress, RADIUS_TOKEN],
+    queryFn: () => fetchTokenBalance(walletAddress),
+    enabled: !!walletAddress,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    refetchInterval: 60000, // Refetch every minute
+  });
+
+  const formattedBalance = tokenBalance
+    ? formatUnits(BigInt(tokenBalance.value), tokenBalance.decimals)
+    : "0.00";
+
+  const formatAddress = (address: string | null) => {
+    if (!address) return "Not connected";
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const displayAddress =
+    ensName || (walletAddress ? formatAddress(walletAddress) : "Not connected");
+  const displayImage = ensAvatar || "";
 
   const handleNavigate = (param: string) => {
     const params = new URLSearchParams(searchParams);
     params.set("view", param);
     router.push(`?${params.toString()}`, { scroll: false });
+  };
+
+  const copyAddress = async () => {
+    if (walletAddress) {
+      await navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
@@ -136,8 +222,64 @@ export function AppSidebar() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="flex p-2"
+                className="space-y-4 px-2 py-4 border-t border-zinc-800/50"
               >
+                {/* Profile Section */}
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border border-zinc-800">
+                    {avatarLoading ? (
+                      <Skeleton className="h-full w-full rounded-full" />
+                    ) : (
+                      <>
+                        <AvatarImage src={displayImage} />
+                        <AvatarFallback className="bg-zinc-900">
+                          <User className="h-4 w-4 text-zinc-400" />
+                        </AvatarFallback>
+                      </>
+                    )}
+                  </Avatar>
+                  <div className="space-y-1">
+                    {ensLoading ? (
+                      <Skeleton className="h-4 w-24" />
+                    ) : (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className="flex items-center gap-2 cursor-pointer"
+                              onClick={copyAddress}
+                            >
+                              <p className="text-sm font-medium text-frost-500">
+                                {displayAddress}
+                              </p>
+                              {copied ? (
+                                <Check className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <Copy className="h-3 w-3 text-zinc-400" />
+                              )}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Click to copy address</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="h-3 w-3 text-zinc-400" />
+                      {balanceLoading ? (
+                        <Skeleton className="h-3 w-16" />
+                      ) : (
+                        <p className="text-xs text-zinc-400">
+                          {Number(formattedBalance).toFixed(2)}{" "}
+                          {tokenBalance?.symbol || "RADIUS"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Copyright */}
                 <p className="text-xs text-zinc-500">
                   © 2024 Radii. All rights reserved.
                 </p>

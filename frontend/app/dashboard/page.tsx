@@ -7,7 +7,9 @@ import { BuyAdsView } from "@/components/views/buy-ads";
 import { ShowAdsView } from "@/components/views/show-ads";
 import { ProfileView } from "@/components/views/profile";
 import { motion, AnimatePresence } from "framer-motion";
-import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
+import { DynamicWidget, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
+import { AuthScreen } from "@/components/views/auth-screen";
+import { useAuth } from "@/providers/auth-provider";
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -19,7 +21,13 @@ const Page = () => {
   const searchParams = useSearchParams();
   const currentView = searchParams.get("view") || "campaigns";
 
+  const { isAuthenticated, isWorldcoinVerified, isDynamicLoggedIn } = useAuth();
+
   const renderView = () => {
+    if (!isAuthenticated) {
+      return <AuthScreen />;
+    }
+
     const View = (() => {
       switch (currentView) {
         case "campaigns":
