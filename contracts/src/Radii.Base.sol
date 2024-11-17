@@ -6,6 +6,7 @@ import {Attestation} from "@ethsign/sign-protocol-evm/src/models/Attestation.sol
 import {DataLocation} from "@ethsign/sign-protocol-evm/src/models/DataLocation.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@fhenixprotocol/contracts/FHE.sol";
 
 // 0x42FF98C4E85212a5D31358ACbFe76a621b50fC02
 // app_staging_880029eb1d4dcab87e776d2ed1a36be7
@@ -47,6 +48,8 @@ contract Radii {
 
 	uint64 public schemaId;
 	ISP public immutable isp;
+
+    mapping(address => euint32[]) profile_tags;
 
     struct AdvertPurchaseBid {
         uint256 bidId;
@@ -170,6 +173,24 @@ contract Radii {
 
     function getAllAdsForAdvertiser() public view returns (AdvertPurchaseBid[] memory) {
         return Advertisers[msg.sender].adsPurchased;
+    }
+
+    function addTagForProfile(inEuint32 calldata t1) public {
+        // address sender = msg.sender;
+
+        euint32 tag = FHE.asEuint32(t1);
+        profile_tags[msg.sender].push(tag);
+    }
+
+    function fetchTagsForProfile(address profile, uint256 start, bytes32 publicKey) public view returns (string memory, string memory, string memory, string memory, string memory, uint256) {
+        return (
+            FHE.sealoutput((start+0 < profile_tags[profile].length) ? profile_tags[profile][start+0] : FHE.asEuint32(0), publicKey),
+            FHE.sealoutput((start+1 < profile_tags[profile].length) ? profile_tags[profile][start+1] : FHE.asEuint32(0), publicKey),
+            FHE.sealoutput((start+2 < profile_tags[profile].length) ? profile_tags[profile][start+2] : FHE.asEuint32(0), publicKey),
+            FHE.sealoutput((start+3 < profile_tags[profile].length) ? profile_tags[profile][start+3] : FHE.asEuint32(0), publicKey),
+            FHE.sealoutput((start+4 < profile_tags[profile].length) ? profile_tags[profile][start+4] : FHE.asEuint32(0), publicKey),
+            profile_tags[profile].length
+        );
     }
 }
 
