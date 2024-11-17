@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DynamicWidget, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
 import { AuthScreen } from "@/components/views/auth-screen";
 import { useAuth } from "@/providers/auth-provider";
+import { Toaster } from "sonner";
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -96,6 +97,8 @@ const Page = () => {
         </div>
         <DynamicWidget />
       </motion.nav>
+
+      <Toaster richColors />
 
       <main className="p-6">
         <AnimatePresence mode="wait">{renderView()}</AnimatePresence>

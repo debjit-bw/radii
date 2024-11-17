@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +6,16 @@ import { Button as UIButton } from "@/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DollarSign, Upload } from "lucide-react";
+import { useState } from "react";
 import Select from "react-select/creatable";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useDropzone } from "react-dropzone";
+import { formatEther, parseEther } from "viem";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { purchaseAdvert } from "@/utils/transitions";
+import { getWeb3Provider } from "@dynamic-labs/ethers-v6";
+import { parseUnits } from "ethers";
 
 const customSelectStyles = {
   control: (base: any, state: any) => ({
@@ -84,14 +91,14 @@ const customSelectStyles = {
 };
 
 const tagOptions = [
-  { value: "technology", label: "Technology" },
-  { value: "gaming", label: "Gaming" },
-  { value: "sports", label: "Sports" },
-  { value: "fashion", label: "Fashion" },
-  { value: "food", label: "Food & Dining" },
-  { value: "travel", label: "Travel" },
-  { value: "education", label: "Education" },
-  { value: "business", label: "Business" },
+  { value: 1, label: "Technology" },
+  { value: 2, label: "Gaming" },
+  { value: 3, label: "Sports" },
+  { value: 4, label: "Fashion" },
+  { value: 5, label: "Food & Dining" },
+  { value: 6, label: "Travel" },
+  { value: 7, label: "Education" },
+  { value: 8, label: "Business" },
 ];
 
 const viewCountOptions = [
@@ -103,7 +110,121 @@ const viewCountOptions = [
   { value: "50000", label: "50,000 views" },
 ];
 
+async function uploadToShutter(file: File) {
+  // return {
+  //   originalImageHash:
+  //     "bafkreicnq3dltpse6pbrg2iahdunpo35tyd7r6yzweqege25aukez7hvpq",
+  // };
+  const reader = new FileReader();
+  const fileBuffer = await new Promise((resolve, reject) => {
+    reader.onload = () => resolve(Buffer.from(reader.result as ArrayBuffer));
+    reader.onerror = (error) => reject(error);
+    reader.readAsArrayBuffer(file);
+  });
+
+  const type = file.type;
+  console.log("Type: ", type);
+
+  const response = await fetch(
+    "https://shutter-image-magic-876401151866.us-central1.run.app",
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": type,
+      },
+      body: fileBuffer as any,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Upload failed");
+  }
+
+  return response.json();
+}
+
+interface CampaignForm {
+  name: string;
+  budget: string;
+  tags: Array<{ value: string; label: string }>;
+  viewCount: { value: string; label: string } | null;
+  file: File | null;
+}
+
 export const BuyAdsView = () => {
+  const { primaryWallet } = useDynamicContext();
+  const [form, setForm] = useState<CampaignForm>({
+    name: "",
+    budget: "",
+    tags: [],
+    viewCount: null,
+    file: null,
+  });
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      "image/*": [".png", ".jpg", ".jpeg", ".gif"],
+    },
+    maxFiles: 1,
+    onDrop: (acceptedFiles) => {
+      setForm((prev) => ({ ...prev, file: acceptedFiles[0] }));
+    },
+  });
+
+  const createCampaignMutation = useMutation({
+    mutationFn: async (data: CampaignForm) => {
+      if (!data.file || !primaryWallet?.connector)
+        throw new Error("Missing file or wallet");
+
+      // 1. Upload file to Shutter
+      const { originalImageHash: contentId } = await uploadToShutter(data.file);
+
+      // 2. Get signer
+      const provider = await getWeb3Provider(primaryWallet);
+      const signer = await provider.getSigner();
+
+      // 3. Convert tags to numbers (you'll need to implement this based on your tag system)
+      const tagNumbers = data.tags.map((tag) => parseInt(tag.value));
+
+      // 4. Get view count
+      const viewCount = parseInt(data.viewCount?.value || "0");
+
+      // 5. Convert budget to wei
+      // value should be data.tags.length * viewCount * 1000;
+
+      const valueInWei =
+        BigInt(data.tags.length) * BigInt(viewCount) * BigInt(1000);
+
+      // 6. Call contract
+      return purchaseAdvert(
+        contentId,
+        tagNumbers,
+        viewCount,
+        valueInWei,
+        signer
+      );
+    },
+    onSuccess: () => {
+      toast.success("Campaign created successfully!");
+      // Reset form
+      setForm({
+        name: "",
+        budget: "",
+        tags: [],
+        viewCount: null,
+        file: null,
+      });
+    },
+    onError: (error) => {
+      toast.error(`Failed to create campaign: ${error.message}`);
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    createCampaignMutation.mutate(form);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -111,83 +232,106 @@ export const BuyAdsView = () => {
           <CardTitle>Create New Advertisement</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Campaign Name</Label>
-              <Input placeholder="Enter campaign name" />
-            </div>
-            <div className="space-y-2">
-              <Label>Budget</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Campaign Name</Label>
                 <Input
-                  type="number"
-                  className="pl-9"
-                  placeholder="Enter budget amount"
+                  placeholder="Enter campaign name"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Budget (ETH)</Label>
+                <div className="relative">
+                  {(BigInt(form.tags.length) *
+                    BigInt(Number(form.viewCount?.value || 0)) *
+                    BigInt(1000)) /
+                    BigInt(10 ** 18)}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Target Tags</Label>
+                <Select
+                  isMulti
+                  value={form.tags}
+                  onChange={(newValue) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      tags: newValue as Array<{ value: string; label: string }>,
+                    }))
+                  }
+                  options={tagOptions.map((tag) => ({
+                    value: tag.value.toString(),
+                    label: tag.label,
+                  }))}
+                  styles={customSelectStyles}
+                  placeholder="Select or create tags"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>View Count Target</Label>
+                <Select
+                  value={form.viewCount}
+                  onChange={(newValue) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      viewCount: newValue as { value: string; label: string },
+                    }))
+                  }
+                  options={viewCountOptions}
+                  styles={customSelectStyles}
+                  placeholder="Select target view counts"
+                  required
                 />
               </div>
             </div>
+
             <div className="space-y-2">
-              <Label>Target Tags</Label>
-              <Select
-                isMulti
-                isClearable
-                options={tagOptions}
-                styles={customSelectStyles}
-                placeholder="Select or create tags"
-                formatCreateLabel={(inputValue: string) =>
-                  `Create tag "${inputValue}"`
-                }
-                className="react-select-container"
-                classNamePrefix="react-select"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Create custom tags or select from existing ones
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label>View Count Target</Label>
-              <Select
-                options={viewCountOptions}
-                styles={customSelectStyles}
-                placeholder="Select target view counts"
-                className="react-select-container"
-                classNamePrefix="react-select"
-                formatGroupLabel={(data: any) => (
-                  <div className="flex items-center justify-between">
-                    <span>{data.label}</span>
-                    <span className="text-muted-foreground text-sm">
-                      {data.options.length}
-                    </span>
+              <Label>Advertisement Content</Label>
+              <Card
+                className={`bg-zinc-900/50 border-dashed cursor-pointer transition-colors
+                  ${isDragActive ? "border-primary" : ""}`}
+                {...getRootProps()}
+              >
+                <CardContent className="p-6">
+                  <input {...getInputProps()} />
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <div className="rounded-full bg-primary/10 p-3">
+                      <Upload className="h-6 w-6 text-primary" />
+                    </div>
+                    {form.file ? (
+                      <p className="text-sm text-muted-foreground">
+                        Selected: {form.file.name}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {isDragActive
+                          ? "Drop the file here"
+                          : "Drag and drop your ad content here, or click to upload"}
+                      </p>
+                    )}
                   </div>
-                )}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Select multiple view count targets
-              </p>
+                </CardContent>
+              </Card>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Advertisement Content</Label>
-            <Card className="bg-zinc-900/50 border-dashed">
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center justify-center space-y-2">
-                  <div className="rounded-full bg-primary/10 p-3">
-                    <Upload className="h-6 w-6 text-primary" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Drag and drop your ad content here, or click to upload
-                  </p>
-                  <Button variant="outline" size="sm">
-                    Choose File
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <UIButton variant="primary" className="w-full">
-            Create Campaign
-          </UIButton>
+
+            <UIButton
+              variant="primary"
+              className="w-full"
+              type="submit"
+              disabled={createCampaignMutation.isPending || !form.file}
+            >
+              {createCampaignMutation.isPending
+                ? "Creating Campaign..."
+                : "Create Campaign"}
+            </UIButton>
+          </form>
         </CardContent>
       </Card>
     </div>

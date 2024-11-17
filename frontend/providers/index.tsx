@@ -5,8 +5,13 @@ import DynamicProvider from "./dynamic-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "./auth-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from "@tanstack/react-query";
 import { createConfig, http, WagmiProvider } from "wagmi";
+import { formatUnits } from "viem";
 import { mainnet } from "viem/chains";
 
 const queryClient = new QueryClient();

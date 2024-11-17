@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/chart";
 import { Button } from "@/ui/button";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 // Chart data with proper typing
 const chartData = [
@@ -353,9 +354,15 @@ export const CampaignsView = () => {
         <Card className="mt-6">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Active Campaigns</CardTitle>
-            <Button variant="primary" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Create New Campaign
+            <Button
+              asChild
+              variant="primary"
+              className="flex items-center gap-2"
+            >
+              <Link href="/dashboard?view=buy">
+                <DollarSign className="h-4 w-4" />
+                Create New Campaign
+              </Link>
             </Button>
           </CardHeader>
           <CardContent>

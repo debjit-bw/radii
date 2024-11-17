@@ -16,22 +16,22 @@ const cssOverrides = `
 
 const DynamicProvider = ({ children }: { children: React.ReactNode }) => {
   const evmNetworks = [
-    {
-      blockExplorerUrls: ["https://explorer.nitrogen.fhenix.zone"],
-      chainId: 8008148,
-      chainName: "Fhenix Nitrogen",
-      iconUrls: ["https://app.dynamic.xyz/assets/networks/eth.svg"],
-      name: "Fhenix Heloum",
-      nativeCurrency: {
-        decimals: 18,
-        name: "tFHE",
-        symbol: "tFHE",
-      },
-      networkId: 2,
+    // {
+    //   blockExplorerUrls: ["https://explorer.nitrogen.fhenix.zone"],
+    //   chainId: 8008148,
+    //   chainName: "Fhenix Nitrogen",
+    //   iconUrls: ["https://app.dynamic.xyz/assets/networks/eth.svg"],
+    //   name: "Fhenix Heloum",
+    //   nativeCurrency: {
+    //     decimals: 18,
+    //     name: "tFHE",
+    //     symbol: "tFHE",
+    //   },
+    //   networkId: 2,
 
-      rpcUrls: ["https://api.nitrogen.fhenix.zone"],
-      vanityName: "Fhenix Nitrogen",
-    },
+    //   rpcUrls: ["https://api.nitrogen.fhenix.zone"],
+    //   vanityName: "Fhenix Nitrogen",
+    // },
     {
       blockExplorerUrls: ["https://sepolia.basescan.org/"],
       chainId: 84532,

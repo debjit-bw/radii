@@ -1,4 +1,4 @@
-import { Contract, JsonRpcSigner } from "ethers";
+import { Contract, JsonRpcSigner, parseEther, parseUnits } from "ethers";
 import { RADII_ABI, RADII_CONTRACT } from "./consts";
 
 const getRadiiContract = (signer: JsonRpcSigner) => {
@@ -41,13 +41,12 @@ export const purchaseAdvert = async (
   signer: JsonRpcSigner
 ) => {
   const RadiiFHE = getRadiiContract(signer);
+
   const resp = await RadiiFHE.purchaseAdvert(
     contentId,
     tagsTargeted,
     viewCount,
-    {
-      value: value,
-    }
+    { value }
   );
   console.log(resp);
   return resp;
