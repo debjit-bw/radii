@@ -7,7 +7,7 @@ const { tmpdir } = require('os');
 const { join } = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-const APIKEY = "46e684db.0bac3e24720c465abc77202340af7089";
+const APIKEY = process.env.LIGHTHOUSE_APIKEY;
 const MAX_DIMENSION = 1024;
 
 function resizeImage(img) {
