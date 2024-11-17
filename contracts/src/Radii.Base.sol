@@ -4,9 +4,6 @@ pragma solidity 0.8.24;
 import {ISP} from "@ethsign/sign-protocol-evm/src/interfaces/ISP.sol";
 import {Attestation} from "@ethsign/sign-protocol-evm/src/models/Attestation.sol";
 import {DataLocation} from "@ethsign/sign-protocol-evm/src/models/DataLocation.sol";
-// import {ISP} from "sign-protocol-evm/interfaces/ISP.sol";
-// import {Attestation} from "sign-protocol-evm/models/Attestation.sol";
-// import {DataLocation} from "sign-protocol-evm/models/DataLocation.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -135,7 +132,7 @@ contract Radii {
 
     function purchaseAdvert(string calldata contentId, uint32[] calldata tagsTargeted, uint256 viewCount) public payable {
         uint256 expectedBidAmount = tagsTargeted.length * viewCount * 1000 gwei;
-        require(msg.value >= expectedBidAmount, "Insufficient funds to purchase advert");
+        // require(msg.value >= expectedBidAmount, "Insufficient funds to purchase advert");
 
         AdvertPurchaseBid memory newBid = AdvertPurchaseBid({
             bidId: Advertisers[msg.sender].adsPurchased.length,
@@ -170,6 +167,10 @@ contract Radii {
         // Emit an event to notify the advert purchase
         emit AdvertPurchased(msg.sender, contentId, msg.value, tagsTargeted, attestationId);
     }
+
+    function getAllAdsForAdvertiser() public view returns (AdvertPurchaseBid[] memory) {
+        return Advertisers[msg.sender].adsPurchased;
+    }
 }
 
 contract Radius is ERC20 {
@@ -177,7 +178,7 @@ contract Radius is ERC20 {
     address[] admins;
 
     /* ERC 20 constructor takes in 2 strings, feel free to change the first string to the name of your token name, and the second string to the corresponding symbol for your custom token name */
-    constructor() ERC20("Radius", "RADIUS") public {
+    constructor() ERC20("Radius", "RADIUS") {
         _mint(msg.sender, _initial_supply);
         admins.push(msg.sender);
     }
