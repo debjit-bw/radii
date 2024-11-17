@@ -63,6 +63,12 @@ export const removeTagsFromProfile = async (
   return resp;
 };
 
+export const getAdsPurchased = async (signer: JsonRpcSigner) => {
+  const RadiiFHE = getRadiiContract(signer);
+  const resp = await RadiiFHE.getAllAdsForAdvertiser();
+  return resp;
+}
+
 export const verifyOrbAndExecute = async (
   signal: string,
   root: bigint,
